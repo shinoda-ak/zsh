@@ -30,6 +30,9 @@ DRACULA_DISPLAY_TIME=${DRACULA_DISPLAY_TIME:-0}
 # Set to 1 to show the 'context' segment
 DRACULA_DISPLAY_CONTEXT=${DRACULA_DISPLAY_CONTEXT:-0}
 
+# Set to 1 to show the 'aws' segment
+DRACULA_DISPLAY_AWS=${DRACULA_DISPLAY_AWS:-0}
+
 # Changes the arrow icon
 DRACULA_ARROW_ICON=${DRACULA_ARROW_ICON:-➜ }
 
@@ -85,7 +88,7 @@ dracula_arrow() {
 	fi
 }
 
-# arrow is green if last command was successful, red if not, 
+# arrow is green if last command was successful, red if not,
 # turns yellow in vi command mode
 PROMPT+='%(1V:%F{yellow}:%(?:%F{green}:%F{red}))%B$(dracula_arrow start)'
 # }}}
@@ -135,14 +138,29 @@ custom_variable_prompt() {
 PROMPT+='$(custom_variable_prompt)'
 # }}}
 
+# AWS segment {{{
+dracula_aws_segment() {
+  if (( DRACULA_DISPLAY_AWS )); then
+    if ([ -n $AWS_PROFILE ]); then
+      echo -n "aws:$AWS_PROFILE"
+    else
+      echo -n ''
+    fi
+  fi
+}
+
+PROMPT+='%F{#ffb86c}%B$(dracula_aws_segment)%f%b '
+# }}}
+
 # Async git segment {{{
 
 dracula_git_status() {
+
 	(( ! DRACULA_DISPLAY_GIT )) && return
 	cd "$1"
-	
+
 	local ref branch lockflag
-	
+
 	(( DRACULA_GIT_NOLOCK )) && lockflag="--no-optional-locks"
 
 	ref=$(=git $lockflag symbolic-ref --quiet HEAD 2>/dev/null)
@@ -154,13 +172,13 @@ dracula_git_status() {
 	esac
 
 	branch=${ref#refs/heads/}
-	
+
 	if [[ -n $branch ]]; then
 		echo -n "${ZSH_THEME_GIT_PROMPT_PREFIX}${branch}"
 
 		local git_status icon
 		git_status="$(LC_ALL=C =git $lockflag status 2>&1)"
-		
+
 		if [[ "$git_status" =~ 'new file:|deleted:|modified:|renamed:|Untracked files:' ]]; then
 			echo -n "$ZSH_THEME_GIT_PROMPT_DIRTY"
 		else
@@ -211,7 +229,7 @@ dracula_defwidget() {
 
 	# if already defined, return
 	[[ "${prev[4]}" = $fname ]] && return
-	
+
 	oldfn=${prev[4]:-$1}
 
 	zle -N dracula-old-$oldfn $oldfn
